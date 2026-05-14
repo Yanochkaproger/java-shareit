@@ -1,6 +1,7 @@
 package ru.practicum.shareit.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.Map;
 
@@ -8,27 +9,23 @@ import java.util.Map;
 public class ErrorHandler {
 
     @ExceptionHandler(RuntimeException.class)
-    public Map<String, String> handleRuntime(RuntimeException e) {
+    public ResponseEntity<Map<String, String>> handle(RuntimeException e) {
         String message = e.getMessage();
+        HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
 
-
-        if (message != null && message.contains("не найден")) {
-            return Map.of("error", message);
+        if (message != null) {
+            if (message.contains("Email уже зарегистрирован")) {
+                status = HttpStatus.CONFLICT;
+            } else if (message.contains("не найден")) {
+                status = HttpStatus.NOT_FOUND;
+            } else if (message.contains("Только владелец")) {
+                status = HttpStatus.FORBIDDEN;
+            }
         }
 
-
-        if (message != null && message.contains("Email уже зарегистрирован")) {
-            return Map.of("error", message);
-        }
-
-
-        if (message != null && message.contains("Только владелец")) {
-            return Map.of("error", message);
-        }
-
-        return Map.of("error", message != null ? message : "Internal server error");
+        return ResponseEntity.status(status)
+                .body(Map.of("error", message != null ? message : "Internal server error"));
     }
-
 
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -39,4 +36,3 @@ public class ErrorHandler {
         return Map.of("error", field + ": " + message);
     }
 }
-

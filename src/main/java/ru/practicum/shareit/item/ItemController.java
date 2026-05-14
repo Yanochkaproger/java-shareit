@@ -27,7 +27,7 @@ public class ItemController {
     public ItemDto update(
             @RequestHeader("X-Sharer-User-Id") Long ownerId,
             @PathVariable Long itemId,
-            @RequestBody @Valid ItemDto dto) {
+            @RequestBody ItemDto dto) {
         return itemService.update(ownerId, itemId, dto);
     }
 
@@ -47,3 +47,4 @@ public class ItemController {
         return itemService.search(text);
     }
 }
+
