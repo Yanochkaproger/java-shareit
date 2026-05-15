@@ -43,12 +43,14 @@ public class ItemServiceImpl implements ItemService {
         }
         Item existing = itemRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Вещь не найдена"));
+
         if (!existing.getOwnerId().equals(ownerId)) {
             throw new RuntimeException("Только владелец может редактировать вещь");
         }
         if (dto.getName() != null) existing.setName(dto.getName());
         if (dto.getDescription() != null) existing.setDescription(dto.getDescription());
         if (dto.getAvailable() != null) existing.setAvailable(dto.getAvailable());
+
         return itemMapper.toItemDto(itemRepository.save(existing));
     }
 
@@ -59,7 +61,7 @@ public class ItemServiceImpl implements ItemService {
         ItemDto dto = itemMapper.toItemDto(item);
         LocalDateTime now = LocalDateTime.now();
 
-        // Комментарии с реальными именами авторов
+        //  Комментарии с реальными именами авторов
         List<CommentDto> comments = commentRepository.findByItemIdOrderByCreatedDesc(itemId).stream()
                 .map(c -> {
                     CommentDto cdto = new CommentDto();
@@ -74,15 +76,22 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
         dto.setComments(comments);
 
-        // Last/Next бронирования
+        //  Last booking: только если оно уже завершилось (end < now)
         Booking last = bookingRepository.findLastApproved(itemId, now);
-        if (last != null) {
+        if (last != null && last.getEnd().isBefore(now)) {
             dto.setLastBooking(createShortBookingDto(last));
+        } else {
+            dto.setLastBooking(null);  // ← Явно устанавливаем null
         }
+
+        // ✅ Next booking: только если оно в будущем (start > now)
         Booking next = bookingRepository.findNextApproved(itemId, now);
-        if (next != null) {
+        if (next != null && next.getStart().isAfter(now)) {
             dto.setNextBooking(createShortBookingDto(next));
+        } else {
+            dto.setNextBooking(null);  // ← Явно устанавливаем null
         }
+
         return dto;
     }
 
@@ -92,13 +101,27 @@ public class ItemServiceImpl implements ItemService {
             throw new RuntimeException("Пользователь не найден");
         }
         LocalDateTime now = LocalDateTime.now();
+
         return itemRepository.findByOwnerId(ownerId).stream()
                 .map(item -> {
                     ItemDto dto = itemMapper.toItemDto(item);
+
+                    //  Last booking: только если оно уже завершилось
                     Booking last = bookingRepository.findLastApproved(item.getId(), now);
-                    if (last != null) dto.setLastBooking(createShortBookingDto(last));
+                    if (last != null && last.getEnd().isBefore(now)) {
+                        dto.setLastBooking(createShortBookingDto(last));
+                    } else {
+                        dto.setLastBooking(null);
+                    }
+
+                    //  Next booking: только если оно в будущем
                     Booking next = bookingRepository.findNextApproved(item.getId(), now);
-                    if (next != null) dto.setNextBooking(createShortBookingDto(next));
+                    if (next != null && next.getStart().isAfter(now)) {
+                        dto.setNextBooking(createShortBookingDto(next));
+                    } else {
+                        dto.setNextBooking(null);
+                    }
+
                     return dto;
                 })
                 .collect(Collectors.toList());
@@ -122,7 +145,7 @@ public class ItemServiceImpl implements ItemService {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Вещь не найдена"));
 
-        // только завершённое подтверждённое бронирование
+        //  Только тот, кто брал вещь в аренду и аренда завершилась
         boolean hasFinishedBooking = bookingRepository.findByBookerIdAndStatusOrderByStartDesc(authorId, BookingStatus.APPROVED)
                 .stream()
                 .anyMatch(b -> b.getItemId().equals(itemId) && b.getEnd().isBefore(LocalDateTime.now()));
@@ -148,13 +171,14 @@ public class ItemServiceImpl implements ItemService {
         return result;
     }
 
-
+    //  Вспомогательный метод для короткого BookingDto (без booker/item)
     private BookingDto createShortBookingDto(Booking booking) {
         BookingDto dto = new BookingDto();
         dto.setId(booking.getId());
         dto.setStart(booking.getStart());
         dto.setEnd(booking.getEnd());
-        // Для ItemDto не нужны вложенные booker/item
+        // Не устанавливаем booker и item — для ItemDto они должны быть null
         return dto;
     }
 }
+
