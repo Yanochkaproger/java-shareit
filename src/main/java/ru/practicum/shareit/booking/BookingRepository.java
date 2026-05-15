@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 
+
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     // Все бронирования пользователя-арендатора (сортировка по дате начала, новые первыми)
@@ -24,7 +25,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.bookerId = :bookerId AND b.start <= :now AND b.end >= :now")
     List<Booking> findCurrentByBookerId(@Param("bookerId") Long bookerId, @Param("now") LocalDateTime now);
 
-    // Прошлые бронирования
+    // Прошлые бронирования (завершённые)
     @Query("SELECT b FROM Booking b WHERE b.bookerId = :bookerId AND b.end < :now ORDER BY b.end DESC")
     List<Booking> findPastByBookerId(@Param("bookerId") Long bookerId, @Param("now") LocalDateTime now);
 
@@ -32,12 +33,21 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
     @Query("SELECT b FROM Booking b WHERE b.bookerId = :bookerId AND b.start > :now ORDER BY b.start ASC")
     List<Booking> findFutureByBookerId(@Param("bookerId") Long bookerId, @Param("now") LocalDateTime now);
 
-    // Ближайшее будущее подтверждённое бронирование для вещи
-    @Query("SELECT b FROM Booking b WHERE b.itemId = :itemId AND b.status = 'APPROVED' AND b.start > :now ORDER BY b.start ASC LIMIT 1")
-    Booking findNextApproved(@Param("itemId") Long itemId, @Param("now") LocalDateTime now);
+    //  Ближайшее будущее подтверждённое бронирование для вещи (используем findFirstBy для LIMIT 1)
+    @Query("SELECT b FROM Booking b WHERE b.itemId = :itemId AND b.status = 'APPROVED' AND b.start > :now ORDER BY b.start ASC")
+    List<Booking> findNextApprovedList(@Param("itemId") Long itemId, @Param("now") LocalDateTime now);
 
-    // Последнее подтверждённое бронирование для вещи
-    @Query("SELECT b FROM Booking b WHERE b.itemId = :itemId AND b.status = 'APPROVED' AND b.end < :now ORDER BY b.end DESC LIMIT 1")
-    Booking findLastApproved(@Param("itemId") Long itemId, @Param("now") LocalDateTime now);
+    //  Вспомогательный метод для получения одного элемента
+    default Booking findNextApproved(Long itemId, LocalDateTime now) {
+        return findNextApprovedList(itemId, now).stream().findFirst().orElse(null);
+    }
+
+    //  Последнее подтверждённое бронирование для вещи (только завершённые: end < now)
+    @Query("SELECT b FROM Booking b WHERE b.itemId = :itemId AND b.status = 'APPROVED' AND b.end < :now ORDER BY b.end DESC")
+    List<Booking> findLastApprovedList(@Param("itemId") Long itemId, @Param("now") LocalDateTime now);
+
+    //  Вспомогательный метод для получения одного элемента
+    default Booking findLastApproved(Long itemId, LocalDateTime now) {
+        return findLastApprovedList(itemId, now).stream().findFirst().orElse(null);
+    }
 }
-
