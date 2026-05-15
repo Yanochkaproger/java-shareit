@@ -13,5 +13,8 @@ public interface ItemService {
     List<ItemDto> getAllByOwner(Long ownerId);
 
     List<ItemDto> search(String text);
+
+    //  Метод для добавления комментария
+    CommentDto addComment(Long authorId, Long itemId, CommentCreateDto dto);
 }
 

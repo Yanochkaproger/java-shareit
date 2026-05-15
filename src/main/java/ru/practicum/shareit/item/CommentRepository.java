@@ -1,0 +1,11 @@
+package ru.practicum.shareit.item;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+
+public interface CommentRepository extends JpaRepository<Comment, Long> {
+    List<Comment> findByItemIdOrderByCreatedDesc(Long itemId);
+
+    // брал ли пользователь эту вещь в аренду
+    boolean existsByItemIdAndAuthorId(Long itemId, Long authorId);
+}

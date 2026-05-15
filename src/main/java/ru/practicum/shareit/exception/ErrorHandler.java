@@ -15,16 +15,14 @@ public class ErrorHandler {
 
         if (message != null) {
             if (message.contains("Email уже зарегистрирован")) {
-                status = HttpStatus.CONFLICT;
+                status = HttpStatus.CONFLICT; // 409
             } else if (message.contains("не найден")) {
-                status = HttpStatus.NOT_FOUND;
-            } else if (message.contains("Только владелец")) {
-                status = HttpStatus.FORBIDDEN;
+                status = HttpStatus.NOT_FOUND; // 404
+            } else if (message.contains("Только владелец") || message.contains("Доступ запрещён")) {
+                status = HttpStatus.FORBIDDEN; // 403
             }
         }
-
-        return ResponseEntity.status(status)
-                .body(Map.of("error", message != null ? message : "Internal server error"));
+        return ResponseEntity.status(status).body(Map.of("error", message != null ? message : "Internal server error"));
     }
 
     @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
