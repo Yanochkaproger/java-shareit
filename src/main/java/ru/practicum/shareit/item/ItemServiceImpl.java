@@ -6,7 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.booking.BookingStatus;
-import ru.practicum.shareit.booking.dto.BookingDto;
+import ru.practicum.shareit.booking.dto.BookingShortDto;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
 import java.time.LocalDateTime;
@@ -61,7 +61,7 @@ public class ItemServiceImpl implements ItemService {
         ItemDto dto = itemMapper.toItemDto(item);
         LocalDateTime now = LocalDateTime.now();
 
-        //  Комментарии с реальными именами авторов
+        // Комментарии с реальными именами авторов
         List<CommentDto> comments = commentRepository.findByItemIdOrderByCreatedDesc(itemId).stream()
                 .map(c -> {
                     CommentDto cdto = new CommentDto();
@@ -76,20 +76,20 @@ public class ItemServiceImpl implements ItemService {
                 .collect(Collectors.toList());
         dto.setComments(comments);
 
-        //  Last booking: только если оно уже завершилось (end < now)
+        // Last booking: только если оно уже завершилось (end < now)
         Booking last = bookingRepository.findLastApproved(itemId, now);
         if (last != null && last.getEnd().isBefore(now)) {
             dto.setLastBooking(createShortBookingDto(last));
         } else {
-            dto.setLastBooking(null);  // ← Явно устанавливаем null
+            dto.setLastBooking(null);
         }
 
-        // ✅ Next booking: только если оно в будущем (start > now)
+        // Next booking: только если оно в будущем (start > now)
         Booking next = bookingRepository.findNextApproved(itemId, now);
         if (next != null && next.getStart().isAfter(now)) {
             dto.setNextBooking(createShortBookingDto(next));
         } else {
-            dto.setNextBooking(null);  // ← Явно устанавливаем null
+            dto.setNextBooking(null);
         }
 
         return dto;
@@ -106,7 +106,7 @@ public class ItemServiceImpl implements ItemService {
                 .map(item -> {
                     ItemDto dto = itemMapper.toItemDto(item);
 
-                    //  Last booking: только если оно уже завершилось
+                    // ✅ Last booking: только если оно уже завершилось
                     Booking last = bookingRepository.findLastApproved(item.getId(), now);
                     if (last != null && last.getEnd().isBefore(now)) {
                         dto.setLastBooking(createShortBookingDto(last));
@@ -114,7 +114,7 @@ public class ItemServiceImpl implements ItemService {
                         dto.setLastBooking(null);
                     }
 
-                    //  Next booking: только если оно в будущем
+                    // ✅ Next booking: только если оно в будущем
                     Booking next = bookingRepository.findNextApproved(item.getId(), now);
                     if (next != null && next.getStart().isAfter(now)) {
                         dto.setNextBooking(createShortBookingDto(next));
@@ -145,7 +145,7 @@ public class ItemServiceImpl implements ItemService {
         Item item = itemRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Вещь не найдена"));
 
-        //  Только тот, кто брал вещь в аренду и аренда завершилась
+        // ✅ Только тот, кто брал вещь в аренду и аренда завершилась
         boolean hasFinishedBooking = bookingRepository.findByBookerIdAndStatusOrderByStartDesc(authorId, BookingStatus.APPROVED)
                 .stream()
                 .anyMatch(b -> b.getItemId().equals(itemId) && b.getEnd().isBefore(LocalDateTime.now()));
@@ -171,14 +171,13 @@ public class ItemServiceImpl implements ItemService {
         return result;
     }
 
-    //  Вспомогательный метод для короткого BookingDto (без booker/item)
-    private BookingDto createShortBookingDto(Booking booking) {
-        BookingDto dto = new BookingDto();
+    // ✅ Вспомогательный метод для упрощённого BookingShortDto
+    private BookingShortDto createShortBookingDto(Booking booking) {
+        BookingShortDto dto = new BookingShortDto();
         dto.setId(booking.getId());
         dto.setStart(booking.getStart());
         dto.setEnd(booking.getEnd());
-        // Не устанавливаем booker и item — для ItemDto они должны быть null
+        // ❌ НЕ устанавливаем: status, booker, item
         return dto;
     }
 }
-
