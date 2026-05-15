@@ -11,7 +11,6 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,8 +19,10 @@ public class Comment {
     @Column(nullable = false)
     private String text;
 
-    @Column(name = "item_id", nullable = false)
-    private Long itemId;
+    // ✅ Связь с вещью (вместо Long itemId)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "item_id", nullable = false)
+    private Item item;
 
     @Column(name = "author_id", nullable = false)
     private Long authorId;

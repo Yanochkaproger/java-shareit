@@ -12,5 +12,4 @@ public class BookingShortDto {
     private Long id;
     private LocalDateTime start;
     private LocalDateTime end;
-    // ❌ НЕ добавляем: status, booker, item — они не нужны для ItemDto
 }

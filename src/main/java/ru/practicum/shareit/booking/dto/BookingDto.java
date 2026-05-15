@@ -14,8 +14,6 @@ public class BookingDto {
     private LocalDateTime start;
     private LocalDateTime end;
     private BookingStatus status;
-
-    //  Вложенные объекты (требование тестов)
-    private BookerShortDto booker;
-    private ItemShortDto item;
+    private BookerShortDto booker; // Вложенный объект
+    private ItemShortDto item;     // Вложенный объект
 }

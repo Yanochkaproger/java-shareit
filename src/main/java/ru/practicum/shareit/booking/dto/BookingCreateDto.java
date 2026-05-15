@@ -11,14 +11,14 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookingCreateDto {
-    @NotNull(message = "ID вещи обязателен")
+    @NotNull
     private Long itemId;
 
-    @NotNull(message = "Дата начала обязательна")
-    @Future(message = "Дата начала должна быть в будущем")
+    @NotNull
+    @Future
     private LocalDateTime start;
 
-    @NotNull(message = "Дата окончания обязательна")
-    @Future(message = "Дата окончания должна быть в будущем")
+    @NotNull
+    @Future
     private LocalDateTime end;
 }

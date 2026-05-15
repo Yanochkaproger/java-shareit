@@ -5,49 +5,41 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
-
+import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
-    // Все бронирования пользователя-арендатора (сортировка по дате начала, новые первыми)
-    List<Booking> findByBookerIdOrderByStartDesc(Long bookerId);
-
-    // Все бронирования вещей владельца (сортировка по дате начала, новые первыми)
-    @Query("SELECT b FROM Booking b WHERE b.itemId IN " +
-            "(SELECT i.id FROM Item i WHERE i.ownerId = :ownerId) " +
-            "ORDER BY b.start DESC")
+    // Поиск по владельцу вещи
+    @Query("SELECT b FROM Booking b WHERE b.item.owner.id = :ownerId ORDER BY b.start DESC")
     List<Booking> findByOwnerItems(@Param("ownerId") Long ownerId);
 
-    // Бронирования по статусу для арендатора
+    // Поиск по бронеру (арендатору)
+    List<Booking> findByBookerIdOrderByStartDesc(Long bookerId);
+
+    // Фильтрация по статусу для арендатора
     List<Booking> findByBookerIdAndStatusOrderByStartDesc(Long bookerId, BookingStatus status);
 
-    // Текущие бронирования (активные сейчас)
-    @Query("SELECT b FROM Booking b WHERE b.bookerId = :bookerId AND b.start <= :now AND b.end >= :now")
+    // Активные бронирования арендатора
+    @Query("SELECT b FROM Booking b WHERE b.booker.id = :bookerId AND b.start <= :now AND b.end >= :now")
     List<Booking> findCurrentByBookerId(@Param("bookerId") Long bookerId, @Param("now") LocalDateTime now);
 
-    // Прошлые бронирования (завершённые)
-    @Query("SELECT b FROM Booking b WHERE b.bookerId = :bookerId AND b.end < :now ORDER BY b.end DESC")
+    // Прошедшие бронирования арендатора
+    @Query("SELECT b FROM Booking b WHERE b.booker.id = :bookerId AND b.end < :now ORDER BY b.end DESC")
     List<Booking> findPastByBookerId(@Param("bookerId") Long bookerId, @Param("now") LocalDateTime now);
 
-    // Будущие бронирования
-    @Query("SELECT b FROM Booking b WHERE b.bookerId = :bookerId AND b.start > :now ORDER BY b.start ASC")
+    // Будущие бронирования арендатора
+    @Query("SELECT b FROM Booking b WHERE b.booker.id = :bookerId AND b.start > :now ORDER BY b.start ASC")
     List<Booking> findFutureByBookerId(@Param("bookerId") Long bookerId, @Param("now") LocalDateTime now);
 
-    //  Ближайшее будущее подтверждённое бронирование для вещи (используем findFirstBy для LIMIT 1)
-    @Query("SELECT b FROM Booking b WHERE b.itemId = :itemId AND b.status = 'APPROVED' AND b.start > :now ORDER BY b.start ASC")
-    List<Booking> findNextApprovedList(@Param("itemId") Long itemId, @Param("now") LocalDateTime now);
+    // Последнее бронирование для вещи (для ItemDto)
+    @Query("SELECT b FROM Booking b WHERE b.item.id = :itemId AND b.status = 'APPROVED' AND b.end < :now ORDER BY b.end DESC")
+    Optional<Booking> findLastByItemId(@Param("itemId") Long itemId, @Param("now") LocalDateTime now);
 
-    //  Вспомогательный метод для получения одного элемента
-    default Booking findNextApproved(Long itemId, LocalDateTime now) {
-        return findNextApprovedList(itemId, now).stream().findFirst().orElse(null);
-    }
+    // Ближайшее будущее бронирование для вещи (для ItemDto)
+    @Query("SELECT b FROM Booking b WHERE b.item.id = :itemId AND b.status = 'APPROVED' AND b.start > :now ORDER BY b.start ASC")
+    Optional<Booking> findNextByItemId(@Param("itemId") Long itemId, @Param("now") LocalDateTime now);
 
-    //  Последнее подтверждённое бронирование для вещи (только завершённые: end < now)
-    @Query("SELECT b FROM Booking b WHERE b.itemId = :itemId AND b.status = 'APPROVED' AND b.end < :now ORDER BY b.end DESC")
-    List<Booking> findLastApprovedList(@Param("itemId") Long itemId, @Param("now") LocalDateTime now);
-
-    //  Вспомогательный метод для получения одного элемента
-    default Booking findLastApproved(Long itemId, LocalDateTime now) {
-        return findLastApprovedList(itemId, now).stream().findFirst().orElse(null);
-    }
+    // Проверка: есть ли завершенное бронирование у пользователя на эту вещь
+    @Query("SELECT COUNT(b) > 0 FROM Booking b WHERE b.booker.id = :userId AND b.item.id = :itemId AND b.status = 'APPROVED' AND b.end < :now")
+    boolean existsFinishedBooking(@Param("userId") Long userId, @Param("itemId") Long itemId, @Param("now") LocalDateTime now);
 }

@@ -14,18 +14,17 @@ import java.util.List;
 public class ItemDto {
     private Long id;
 
-    @NotBlank(message = "Название не может быть пустым")
+    @NotBlank
     private String name;
 
-    @NotBlank(message = "Описание не может быть пустым")
+    @NotBlank
     private String description;
 
-    @NotNull(message = "Статус доступности обязателен")
+    @NotNull
     private Boolean available;
 
-    private Long ownerId;
+    private Long ownerId; // Для JSON ответа оставляем ID
     private Long requestId;
-
 
     private BookingShortDto lastBooking;
     private BookingShortDto nextBooking;
