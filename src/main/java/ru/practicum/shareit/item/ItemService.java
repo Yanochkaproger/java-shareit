@@ -14,7 +14,6 @@ public interface ItemService {
 
     List<ItemDto> search(String text);
 
-    //  Метод для добавления комментария
     CommentDto addComment(Long authorId, Long itemId, CommentCreateDto dto);
 }
 

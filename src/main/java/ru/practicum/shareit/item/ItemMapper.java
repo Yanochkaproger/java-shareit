@@ -10,6 +10,7 @@ public final class ItemMapper {
     private ItemMapper() {
     }
 
+
     public static Item toItem(ItemDto dto, User owner) {
         Item item = new Item();
         item.setName(dto.getName());
@@ -29,7 +30,6 @@ public final class ItemMapper {
         dto.setOwnerId(item.getOwner() != null ? item.getOwner().getId() : null);
         dto.setRequestId(item.getRequestId());
         dto.setComments(comments);
-
         return dto;
     }
 
@@ -40,11 +40,12 @@ public final class ItemMapper {
         return dto;
     }
 
-    private static BookingShortDto toBookingShortDto(Booking booking) {
+    private static BookingShortDto toBookingShortDto(Booking b) {
         BookingShortDto dto = new BookingShortDto();
-        dto.setId(booking.getId());
-        dto.setStart(booking.getStart());
-        dto.setEnd(booking.getEnd());
+        dto.setId(b.getId());
+        dto.setStart(b.getStart());
+        dto.setEnd(b.getEnd());
         return dto;
     }
 }
+

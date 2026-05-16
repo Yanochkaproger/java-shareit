@@ -1,16 +1,16 @@
 package ru.practicum.shareit.item;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comments")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Comment {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -19,7 +19,6 @@ public class Comment {
     @Column(nullable = false)
     private String text;
 
-    // ✅ Связь с вещью (вместо Long itemId)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", nullable = false)
     private Item item;
@@ -30,4 +29,5 @@ public class Comment {
     @Column(nullable = false)
     private LocalDateTime created;
 }
+
 

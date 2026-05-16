@@ -1,18 +1,18 @@
 package ru.practicum.shareit.booking;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import ru.practicum.shareit.item.Item;
 import ru.practicum.shareit.user.User;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "bookings")
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
-@AllArgsConstructor
 public class Booking {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -36,4 +36,5 @@ public class Booking {
     @Column(nullable = false)
     private BookingStatus status;
 }
+
 
