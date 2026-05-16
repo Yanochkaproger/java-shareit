@@ -7,6 +7,7 @@ import ru.practicum.shareit.booking.Booking;
 import ru.practicum.shareit.booking.BookingRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserRepository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -36,12 +37,14 @@ public class ItemServiceImpl implements ItemService {
     public ItemDto update(Long ownerId, Long itemId, ItemDto dto) {
         Item existing = itemRepository.findById(itemId)
                 .orElseThrow(() -> new RuntimeException("Вещь с id=" + itemId + " не найдена"));
+
         if (!existing.getOwner().getId().equals(ownerId)) {
             throw new RuntimeException("Только владелец вещи с id=" + itemId + " может её редактировать");
         }
         if (dto.getName() != null) existing.setName(dto.getName());
         if (dto.getDescription() != null) existing.setDescription(dto.getDescription());
         if (dto.getAvailable() != null) existing.setAvailable(dto.getAvailable());
+
         return ItemMapper.toItemDto(existing, List.of());
     }
 
@@ -51,6 +54,7 @@ public class ItemServiceImpl implements ItemService {
                 .orElseThrow(() -> new RuntimeException("Вещь с id=" + itemId + " не найдена"));
 
         List<CommentDto> comments = loadComments(itemId);
+        // Для GET /items/{id} бронирования должны оставаться null
         return ItemMapper.toItemDto(item, comments);
     }
 
@@ -65,16 +69,20 @@ public class ItemServiceImpl implements ItemService {
 
         List<Long> itemIds = items.stream().map(Item::getId).toList();
 
-
+        // Комментарии ОДНИМ запросом
         Map<Long, List<Comment>> commentsMap = commentRepository.findByItemIdInOrderByCreatedDesc(itemIds)
                 .stream()
                 .collect(Collectors.groupingBy(c -> c.getItem().getId()));
 
+        // Бронирования ДВУМЯ запросами (БЕЗ циклов и N+1)
 
-        Map<Long, Booking> lastBookings = itemIds.stream()
-                .collect(Collectors.toMap(id -> id, id -> bookingRepository.findLastByItemId(id, now).orElse(null)));
-        Map<Long, Booking> nextBookings = itemIds.stream()
-                .collect(Collectors.toMap(id -> id, id -> bookingRepository.findNextByItemId(id, now).orElse(null)));
+        Map<Long, Booking> lastBookings = bookingRepository.findLastBookingsByItemIds(itemIds, now)
+                .stream()
+                .collect(Collectors.toMap(b -> b.getItem().getId(), b -> b, (b1, b2) -> b1));
+
+        Map<Long, Booking> nextBookings = bookingRepository.findNextBookingsByItemIds(itemIds, now)
+                .stream()
+                .collect(Collectors.toMap(b -> b.getItem().getId(), b -> b, (b1, b2) -> b1));
 
         return items.stream().map(item -> {
             List<CommentDto> comments = commentsMap.getOrDefault(item.getId(), List.of()).stream()
@@ -85,7 +93,12 @@ public class ItemServiceImpl implements ItemService {
                     }).collect(Collectors.toList());
 
 
-            return ItemMapper.toItemDtoWithBookings(item, comments, lastBookings.get(item.getId()), nextBookings.get(item.getId()));
+            return ItemMapper.toItemDtoWithBookings(
+                    item,
+                    comments,
+                    lastBookings.get(item.getId()),
+                    nextBookings.get(item.getId())
+            );
         }).collect(Collectors.toList());
     }
 
