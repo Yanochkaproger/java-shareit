@@ -3,11 +3,8 @@ package ru.practicum.shareit.exception;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-
-import java.util.stream.Collectors;
 
 @RestControllerAdvice
 @Slf4j
@@ -31,18 +28,11 @@ public class ExceptionResponseHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler({IllegalArgumentException.class, ValidationException.class, MethodArgumentNotValidException.class})
+    @ExceptionHandler({IllegalArgumentException.class, ValidationException.class})
     public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
-        String error = ex.getMessage();
-        if (ex instanceof MethodArgumentNotValidException methodArgumentNotValidException) {
-            error = methodArgumentNotValidException.getBindingResult().getFieldErrors().stream()
-                    .map(e -> e.getField() + ": " + e.getDefaultMessage())
-                    .collect(Collectors.joining(", "));
-        }
-
         ErrorResponse errorResponse = new ErrorResponse(
                 HttpStatus.BAD_REQUEST,
-                error
+                ex.getMessage()
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
@@ -52,10 +42,11 @@ public class ExceptionResponseHandler {
         log.error("Critical error: {}", ex.getMessage());
 
         ErrorResponse errorResponse = new ErrorResponse(
-                HttpStatus.BAD_REQUEST,
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error"
         );
         return new ResponseEntity<>(errorResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
+
 
