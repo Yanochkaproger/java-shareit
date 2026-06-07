@@ -82,6 +82,24 @@
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
+						<configuration>
+							<excludes>
+
+								<exclude>**/*Dto.class</exclude>
+								<exclude>**/*DTO.class</exclude>
+								<exclude>**/model/**</exclude>
+								<exclude>**/item/Item.class</exclude>
+								<exclude>**/user/User.class</exclude>
+								<exclude>**/booking/Booking.class</exclude>
+								<exclude>**/item/Comment.class</exclude>
+								<exclude>**/request/ItemRequest.class</exclude>
+								<exclude>**/*Mapper.class</exclude>
+								<exclude>**/exception/**</exclude>
+								<exclude>**/*State.class</exclude>
+								<exclude>**/*Status.class</exclude>
+								<exclude>**/ShareItServer.class</exclude>
+							</excludes>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>
