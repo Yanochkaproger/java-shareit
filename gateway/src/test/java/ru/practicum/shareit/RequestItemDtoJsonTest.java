@@ -1,5 +1,6 @@
 package ru.practicum.shareit;
 
+import ru.practicum.shareit.request.RequestItemDto;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;

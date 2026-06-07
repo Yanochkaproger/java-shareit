@@ -1,5 +1,6 @@
 package ru.practicum.shareit;
 
+import ru.practicum.shareit.booking.dto.BookingRequestDto;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.boot.test.json.JacksonTester;
 import org.springframework.boot.test.json.JsonContent;
+
 
 import java.time.LocalDateTime;
 import java.util.Set;

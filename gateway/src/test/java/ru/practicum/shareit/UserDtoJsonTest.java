@@ -1,5 +1,7 @@
 package ru.practicum.shareit;
 
+import ru.practicum.shareit.user.RequestUserDto;
+import ru.practicum.shareit.user.UpdateUserDto;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
